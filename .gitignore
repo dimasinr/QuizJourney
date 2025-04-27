@@ -1,0 +1,64 @@
+## Build Folders ##
+bin/
+obj/
+out/
+publish/
+TestResults/
+Generated/
+
+## VS User Files ##
+*.user
+*.suo
+*.sln.docstates
+*.VC.db
+
+## Rider IDE ##
+.idea/
+*.sln.iml
+
+## VS Code ##
+.vscode/
+.history/
+
+## OS Specific ##
+.DS_Store
+Thumbs.db
+
+## ASP.NET Core ##
+appsettings.Development.json
+appsettings.*.json
+secrets.json
+*.secret.json
+.env
+*.env
+
+## Entity Framework Core ##
+Migrations/*ModelSnapshot.cs
+*.db
+*.sqlite
+
+## Logs and Cache ##
+*.log
+*.tlog
+*.cache
+*.bak
+
+## NuGet ##
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+
+## dotnet tools ##
+.dotnet-toolstore/
+global.json
+
+## ReSharper / Rider ##
+_ReSharper*/
+*.DotSettings.user
+
+## Others ##
+*.vspscc
+*.vssscc
+.vs/
