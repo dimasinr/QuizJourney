@@ -64,11 +64,14 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 // =========================
 // 🚀 Build and Run App
 // =========================
 var app = builder.Build();
+
+app.MapHub<RoomHub>("/roomHub");
 
 if (app.Environment.IsDevelopment())
 {

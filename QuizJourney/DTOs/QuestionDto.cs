@@ -12,7 +12,7 @@
         public int Id { get; set; }
         public string Text { get; set; } = string.Empty;
         public int RoomId { get; set; }
-        public int CorrectChoiceId { get; set; }
         public List<ChoiceDTO> Choices { get; set; } = new();
+        public int CorrectChoiceId { get; set; }
     }
 }

@@ -91,5 +91,56 @@ namespace QuizJourney.Controllers
 
             return Ok(new { message = "Room berhasil dihapus" });
         }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetRooms([FromQuery] int? teacherId)
+        {
+            var user = User;
+            var isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+            var role = user.FindFirst(ClaimTypes.Role)?.Value;
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+
+            IQueryable<Room> query = _context.Rooms.Include(r => r.Teacher);
+
+            if (isAuthenticated)
+            {
+                if (role == "Teacher")
+                {
+                    if (userIdClaim == null)
+                        return Unauthorized("Invalid token");
+
+                    var teacherIdFromToken = int.Parse(userIdClaim.Value);
+                    query = query.Where(r => r.TeacherId == teacherIdFromToken);
+                }
+                else if (role == "Student")
+                {
+                    if (teacherId.HasValue)
+                    {
+                        query = query.Where(r => r.TeacherId == teacherId.Value);
+                    }
+                }
+            }
+            else
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            var rooms = await query.ToListAsync();
+
+            var roomDTOs = rooms.Select(r => new RoomDTO
+            {
+                RoomId = r.Id,
+                Title = r.Title,
+                Description = r.Description,
+                Teacher = r.Teacher != null ? new TeacherDTO
+                {
+                    Id = r.Teacher.Id,
+                    Name = r.Teacher.Username
+                } : null
+            }).ToList();
+
+            return Ok(roomDTOs);
+        }
     }
 }

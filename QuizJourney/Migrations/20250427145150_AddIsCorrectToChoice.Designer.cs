@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QuizJourney.Data;
 
@@ -10,9 +11,11 @@ using QuizJourney.Data;
 namespace QuizJourney.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250427145150_AddIsCorrectToChoice")]
+    partial class AddIsCorrectToChoice
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,9 +27,6 @@ namespace QuizJourney.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("QuestionId")
                         .HasColumnType("int");
@@ -158,14 +158,14 @@ namespace QuizJourney.Migrations
                         new
                         {
                             Id = 1,
-                            PasswordHash = "$2a$11$F3uYmeJaOoJ7Geut7hlnW.cMJuEK3MX1Luz/bCqSiSszc04qjLxJm",
+                            PasswordHash = "$2a$11$jRORk/3SRvfpwoErLCWBC.bnXqHhnLlwBGYLwMaaNiQCJANYuNs1e",
                             Role = "Teacher",
                             Username = "dimas"
                         },
                         new
                         {
                             Id = 2,
-                            PasswordHash = "$2a$11$F3uYmeJaOoJ7Geut7hlnW.cMJuEK3MX1Luz/bCqSiSszc04qjLxJm",
+                            PasswordHash = "$2a$11$jRORk/3SRvfpwoErLCWBC.bnXqHhnLlwBGYLwMaaNiQCJANYuNs1e",
                             Role = "Student",
                             Username = "ricky"
                         });
