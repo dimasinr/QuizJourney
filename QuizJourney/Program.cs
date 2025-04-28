@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using QuizJourney.Services.RoomTracker;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,7 +65,21 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", builder =>
+    {
+        builder.AllowAnyOrigin() 
+               .AllowAnyMethod()  
+               .AllowAnyHeader()  
+               .AllowCredentials(); 
+    });
+});
+
 builder.Services.AddSignalR();
+
+builder.Services.AddSingleton<IRoomTrackerService, RoomTrackerService>();
 
 // =========================
 // 🚀 Build and Run App
@@ -81,8 +96,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllers();
 

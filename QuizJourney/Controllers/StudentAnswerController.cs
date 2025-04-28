@@ -20,19 +20,24 @@ namespace QuizJourney.Controllers
             _context = context;
         }
 
-        [Authorize] // Pastikan user harus login
+        [Authorize] 
         [HttpPost]
         public async Task<IActionResult> SubmitAnswer([FromBody] StudentAnswerRequest answerRequest)
         {
             if (answerRequest == null)
                 return BadRequest("Answer data is required");
 
-            // Ambil UserId dari JWT
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
                 return Unauthorized("User ID not found in token");
 
             int userId = int.Parse(userIdClaim.Value);
+
+            bool alreadyAnswered = await _context.StudentAnswers
+                .AnyAsync(sa => sa.UserId == userId && sa.QuestionId == answerRequest.QuestionId);
+
+            if (alreadyAnswered)
+                return BadRequest("You have already answered this question.");
 
             var question = await _context.Questions.FindAsync(answerRequest.QuestionId);
             if (question == null)
