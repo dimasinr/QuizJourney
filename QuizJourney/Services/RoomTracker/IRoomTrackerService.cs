@@ -1,8 +1,10 @@
 namespace QuizJourney.Services.RoomTracker;
 public interface IRoomTrackerService
 {
-    void AddUserToRoom(string roomId, string connectionId, string username);
-    void RemoveUser(string connectionId);
-    int GetRoomUserCount(string roomId);
-    List<string> GetUsernamesInRoom(string roomId);
+    void AddUserToRoom(int roomId, string connectionId, string username);
+    void RemoveUserFromRoom(string connectionId);
+    List<string> GetUsersInRoom(int roomId);
+    int? GetRoomByConnectionId(string connectionId);
+    string? GetUsernameByConnectionId(string connectionId);
 }
+

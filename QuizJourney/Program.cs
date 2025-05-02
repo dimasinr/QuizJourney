@@ -72,8 +72,8 @@ builder.Services.AddCors(options =>
     {
         builder.AllowAnyOrigin() 
                .AllowAnyMethod()  
-               .AllowAnyHeader()  
-               .AllowCredentials(); 
+               .AllowAnyHeader();  
+            //    .AllowCredentials(); 
     });
 });
 
@@ -85,7 +85,9 @@ builder.Services.AddSingleton<IRoomTrackerService, RoomTrackerService>();
 // 🚀 Build and Run App
 // =========================
 var app = builder.Build();
+app.UseCors("AllowAllOrigins");
 
+app.MapControllers();
 app.MapHub<RoomHub>("/roomHub");
 
 if (app.Environment.IsDevelopment())
@@ -99,6 +101,5 @@ app.UseHttpsRedirection();
 // app.UseAuthentication();
 // app.UseAuthorization();
 
-app.MapControllers();
 
 app.Run();
