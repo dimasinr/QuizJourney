@@ -10,7 +10,6 @@ public class RoomHub : Hub
         _roomTracker = roomTracker;
     }
 
-    // Bergabung ke Room
     public async Task JoinRoom(int roomId, string username)
     {
         try
@@ -19,6 +18,11 @@ public class RoomHub : Hub
             {
                 throw new ArgumentException("Username cannot be null or empty.");
             }
+            // _roomTracker.RemoveUserFromRoom(Context.ConnectionId);
+            // var usersRemoved = _roomTracker.GetUsersInRoom(roomId);
+            // await Clients.Group(roomId.ToString()).SendAsync("RoomUserCountUpdated", usersRemoved.Count);
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
 
             _roomTracker.AddUserToRoom(roomId, Context.ConnectionId, username);
 
@@ -26,19 +30,19 @@ public class RoomHub : Hub
 
             await Clients.Group(roomId.ToString()).SendAsync("RoomUserListUpdated", users);
             await Clients.Group(roomId.ToString()).SendAsync("RoomUserCountUpdated", users.Count);
-            Console.WriteLine("USER COUNT : " + users.Count);
+            
+            Console.WriteLine($"[DEBUG] AddUserToRoom: roomId={roomId}, connId={Context.ConnectionId}, username={username}");
+            Console.WriteLine($"[DEBUG] Current users in room {roomId}: {string.Join(", ", users)}");
 
-            // Tambahkan client ke grup SignalR untuk room tersebut
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
-
-            Console.WriteLine($"User {username} has joined the room {roomId}.");
+            Console.WriteLine($"[JoinRoom] {username} joined room {roomId} - now {users.Count} users.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in JoinRoom: {ex.Message}");
+            Console.WriteLine($"[JoinRoom] Error: {ex.Message}");
             throw;
         }
     }
+
 
     public async Task LeaveRoom(int roomId, string username)
     {

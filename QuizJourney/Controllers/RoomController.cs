@@ -10,7 +10,7 @@ namespace QuizJourney.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Teacher")]
+    [Authorize]
     public class RoomController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -54,7 +54,7 @@ namespace QuizJourney.Controllers
                 Teacher = teacher != null ? new TeacherDTO
                 {
                     Id = teacher.Id,
-                    Name = teacher.Username
+                    Username = teacher.Username
                 } : null
             };
 
@@ -93,40 +93,26 @@ namespace QuizJourney.Controllers
         }
 
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GetRooms([FromQuery] int? teacherId)
+        public async Task<IActionResult> GetRooms([FromQuery] int? teacherId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var user = User;
-            var isAuthenticated = user.Identity?.IsAuthenticated ?? false;
-            var role = user.FindFirst(ClaimTypes.Role)?.Value;
-            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (page <= 0) page = 1;
+            if (pageSize <= 0) pageSize = 10;
 
             IQueryable<Room> query = _context.Rooms.Include(r => r.Teacher);
 
-            if (isAuthenticated)
+            if (teacherId.HasValue)
             {
-                if (role == "Teacher")
-                {
-                    if (userIdClaim == null)
-                        return Unauthorized("Invalid token");
-
-                    var teacherIdFromToken = int.Parse(userIdClaim.Value);
-                    query = query.Where(r => r.TeacherId == teacherIdFromToken);
-                }
-                else if (role == "Student")
-                {
-                    if (teacherId.HasValue)
-                    {
-                        query = query.Where(r => r.TeacherId == teacherId.Value);
-                    }
-                }
-            }
-            else
-            {
-                return Unauthorized("User not authenticated");
+                query = query.Where(r => r.TeacherId == teacherId.Value);
             }
 
-            var rooms = await query.ToListAsync();
+            // Hitung total data (untuk informasi meta)
+            var totalCount = await query.CountAsync();
+
+            // Ambil data sesuai halaman
+            var rooms = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             var roomDTOs = rooms.Select(r => new RoomDTO
             {
@@ -136,11 +122,22 @@ namespace QuizJourney.Controllers
                 Teacher = r.Teacher != null ? new TeacherDTO
                 {
                     Id = r.Teacher.Id,
-                    Name = r.Teacher.Username
+                    Username = r.Teacher.Username
                 } : null
             }).ToList();
 
-            return Ok(roomDTOs);
+            var response = new
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+                Data = roomDTOs
+            };
+
+            return Ok(response);
         }
+
+
     }
 }
