@@ -10,5 +10,7 @@
         public int SelectedChoiceId { get; set; }
         public double TimeTaken { get; set; } 
         public double Score { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

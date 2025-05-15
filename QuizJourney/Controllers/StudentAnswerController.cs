@@ -10,7 +10,6 @@ namespace QuizJourney.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Student")]
     public class StudentAnswerController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -20,7 +19,7 @@ namespace QuizJourney.Controllers
             _context = context;
         }
 
-        [Authorize] 
+        [Authorize(Roles = "Student")]
         [HttpPost]
         public async Task<IActionResult> SubmitAnswer([FromBody] StudentAnswerRequest answerRequest)
         {
@@ -76,6 +75,30 @@ namespace QuizJourney.Controllers
                 return NotFound();
 
             return Ok(studentAnswer);
+        }
+
+        [HttpGet("room/{roomId}/scores")]
+        public async Task<IActionResult> GetScoresByRoom(int roomId)
+        {
+            var scores = await _context.StudentAnswers
+                .Where(sa => sa.Question != null && sa.Question.RoomId == roomId)
+                .GroupBy(sa => sa.User)
+                .Select(g => new
+                {
+                    Username = g.Key!.Username,
+                    Score = g.Sum(x => x.Score),
+                    FirstAnswerTime = g.Min(x => x.CreatedAt)
+                })
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.FirstAnswerTime)
+                .Select(x => new UserScore
+                {
+                    Username = x.Username,
+                    Score = x.Score
+                })
+                .ToListAsync();
+
+            return Ok(scores);
         }
     }
 }

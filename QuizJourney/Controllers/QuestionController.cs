@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizJourney.Data;
 using QuizJourney.DTOs;
 using QuizJourney.Models;
+using System.Security.Claims;
 
 namespace QuizJourney.Controllers
 {
@@ -19,8 +21,15 @@ namespace QuizJourney.Controllers
 
         // GET api/questions/{roomId}
         [HttpGet("{roomId}")]
+        [Authorize]
         public async Task<IActionResult> GetQuestions(int roomId)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized();
+
+            var userId = int.Parse(userIdClaim.Value);
+
             var questions = await _context.Questions
                 .Where(q => q.RoomId == roomId)
                 .Include(q => q.Choices)
@@ -28,19 +37,46 @@ namespace QuizJourney.Controllers
 
             if (questions == null || !questions.Any())
                 return NotFound("Questions not found for the specified room.");
+            
+            var answeredQuestions = await _context.StudentAnswers
+                .Where(sa => sa.UserId == userId && sa.Question.RoomId == roomId)
+                .ToListAsync();
 
-            var result = questions.Select(q => new QuestionDTO
+            var result = questions.Select(q => 
             {
-                Id = q.Id,
-                Text = q.Text,
-                RoomId = q.RoomId,
-                CorrectChoiceId = q.CorrectChoiceId,
-                Choices = q.Choices?.Select(c => new ChoiceDTO
+                double score = 0;
+                var answer = answeredQuestions.FirstOrDefault(a => a.QuestionId == q.Id);
+                ChoiceDTO? selectedChoiceDto = null;
+                if(answer != null){
+                    var selectedChoiceEntity = q.Choices.FirstOrDefault(c => c.Id == answer.SelectedChoiceId);
+                    if (selectedChoiceEntity != null)
+                    {
+                        selectedChoiceDto = new ChoiceDTO
+                        {
+                            Id = selectedChoiceEntity.Id,
+                            Text = selectedChoiceEntity.Text,
+                            IsCorrect = selectedChoiceEntity.Id == q.CorrectChoiceId
+                        };
+                        score = answer.Score;                
+                    }
+                }
+
+
+                return new QuestionDTO
                 {
-                    Id = c.Id,
-                    Text = c.Text,
-                    IsCorrect = c.Id == q.CorrectChoiceId
-                }).ToList() ?? new List<ChoiceDTO>()
+                    Id = q.Id,
+                    Text = q.Text,
+                    RoomId = q.RoomId,
+                    SelectedChoice = selectedChoiceDto, 
+                    Score = score,
+                    CorrectChoiceId = q.CorrectChoiceId,
+                    Choices = q.Choices?.Select(c => new ChoiceDTO
+                    {
+                        Id = c.Id,
+                        Text = c.Text,
+                        IsCorrect = c.Id == q.CorrectChoiceId
+                    }).ToList() ?? new List<ChoiceDTO>()
+                }; 
             });
 
             return Ok(result);

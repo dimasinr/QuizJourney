@@ -1,13 +1,19 @@
 using Microsoft.AspNetCore.SignalR;
 using QuizJourney.Services.RoomTracker;
+using QuizJourney.Data;
+using QuizJourney.DTOs;
+using QuizJourney.Models;            // untuk UserScore dan model lain
+using Microsoft.EntityFrameworkCore; 
 
 public class RoomHub : Hub
 {
     private readonly IRoomTrackerService _roomTracker;
+    private readonly ApplicationDbContext _context;
 
-    public RoomHub(IRoomTrackerService roomTracker)
+    public RoomHub(IRoomTrackerService roomTracker, ApplicationDbContext context)
     {
         _roomTracker = roomTracker;
+        _context = context;
     }
 
     public async Task JoinRoom(int roomId, string username)
@@ -100,11 +106,37 @@ public class RoomHub : Hub
     {
         try
         {
-            await Clients.Group(roomId.ToString()).SendAsync("UserAnswered", questionId, username);
+            var scores = await _context.StudentAnswers
+                .Include(sa => sa.Question)
+                .Include(sa => sa.User)
+                .Where(sa => sa.Question != null && sa.Question.RoomId == roomId)
+                .GroupBy(sa => sa.User)
+                .Select(g => new
+                {
+                    Username = g.Key!.Username,
+                    Score = g.Sum(x => x.Score),
+                    FirstAnswerTime = g.Min(x => x.CreatedAt)
+                })
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.FirstAnswerTime)
+                .Select(x => new UserScore
+                {
+                    Username = x.Username,
+                    Score = (int)x.Score  
+                })
+                .ToListAsync();
+
+            foreach(var score in scores)
+            {
+                Console.WriteLine($"Username: {score.Username}, Score: {score.Score}");
+            }
+
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveRanking", scores);
+            Console.WriteLine($"[SubmitAnswer] Broadcasted 'ReceiveRanking' event to room {roomId}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in SubmitAnswer: {ex.Message}");
+            Console.WriteLine($"[SubmitAnswer] Error: {ex.Message}");
             throw;
         }
     }
