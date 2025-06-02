@@ -106,10 +106,11 @@ public class RoomHub : Hub
     {
         try
         {
+            var today = DateTime.UtcNow.Date;
             var scores = await _context.StudentAnswers
                 .Include(sa => sa.Question)
                 .Include(sa => sa.User)
-                .Where(sa => sa.Question != null && sa.Question.RoomId == roomId)
+                .Where(sa => sa.Question != null && sa.Question.RoomId == roomId && sa.CreatedAt.Date == today)
                 .GroupBy(sa => sa.User)
                 .Select(g => new
                 {

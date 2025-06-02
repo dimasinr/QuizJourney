@@ -10,6 +10,7 @@
         public int SelectedChoiceId { get; set; }
         public double TimeTaken { get; set; } 
         public double Score { get; set; }
+        public string StudentCode { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

@@ -32,8 +32,9 @@ namespace QuizJourney.Controllers
 
             int userId = int.Parse(userIdClaim.Value);
 
+            var today = DateTime.UtcNow.Date;
             bool alreadyAnswered = await _context.StudentAnswers
-                .AnyAsync(sa => sa.UserId == userId && sa.QuestionId == answerRequest.QuestionId);
+                .AnyAsync(sa => sa.UserId == userId && sa.QuestionId == answerRequest.QuestionId && sa.CreatedAt == today);
 
             if (alreadyAnswered)
                 return BadRequest("You have already answered this question.");
@@ -80,8 +81,9 @@ namespace QuizJourney.Controllers
         [HttpGet("room/{roomId}/scores")]
         public async Task<IActionResult> GetScoresByRoom(int roomId)
         {
+            var today = DateTime.UtcNow.Date;
             var scores = await _context.StudentAnswers
-                .Where(sa => sa.Question != null && sa.Question.RoomId == roomId)
+                .Where(sa => sa.Question != null && sa.Question.RoomId == roomId && sa.CreatedAt.Date == today)
                 .GroupBy(sa => sa.User)
                 .Select(g => new
                 {
